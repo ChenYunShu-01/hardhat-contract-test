@@ -16,7 +16,6 @@ You may have your ERC20 or ERC721 contract inherited from openzeppelin standard 
 
 ```
 $ npm install --save-dev hardhat
-
 ```
 
 ## Usage
