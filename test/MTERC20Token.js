@@ -1,4 +1,4 @@
-const {expect} = require('chai');
+const {expect, util} = require('chai');
 const { ethers } = require('hardhat');
 
 describe('Token contract', ()=> {
@@ -10,10 +10,12 @@ describe('Token contract', ()=> {
         token = await Token.deploy();
         await token.deployed();
         [owner, addr1, addr2, _] = await ethers.getSigners();
+        
     });
 
     it('Should successfully deployed', async()=>{
-        console.log("deploy success!")
+        console.log("deploy success!");
+        console.log(owner.address);
     });
 
     describe('Deployment', () => {
@@ -33,16 +35,25 @@ describe('Token contract', ()=> {
     describe('Transactions', () => {
         it('Should let you give another address the approval to transfer tokens', async ()=>{ 
             //change the default owner address to addr1
-            await token.connect(addr1).approve(owner.address, "1000");
+            console.log(owner.address);
+            console.log(addr1.address);
+            await token.connect(addr1).approve(owner.address, ethers.utils.parseEther("1000"));
+            //const a = await token.allowance(addr1.address, owner.address);
+            // console.log(a);
+            // const ownerBalance = await token.balanceOf(owner.address);
+            // console.log(ownerBalance);
+            await token.transfer(addr1.address, ethers.utils.parseEther('1000'));
+            await token.transferFrom(addr1.address, addr2.address, ethers.utils.parseEther('1000'));
+            expect(await token.balanceOf(addr2.address)).to.equal(ethers.utils.parseEther('1000'));
         });
         it('Should transfer tokens between accounts', async () => {
-            await token.transfer(addr1.address, 50);
+            await token.transfer(addr1.address, ethers.utils.parseEther('50'));
             const addr1Balance = await token.balanceOf(addr1.address);
-            expect(addr1Balance).to.equal(50);
+            expect(addr1Balance).to.equal(ethers.utils.parseEther('50'));
             
-            await token.connect(addr1).transfer(addr2.address, 50);
+            await token.connect(addr1).transfer(addr2.address, ethers.utils.parseEther('50'));
             const addr2Balance = await token.balanceOf(addr2.address);
-            expect(addr2Balance).to.equal(50);
+            expect(addr2Balance).to.equal(ethers.utils.parseEther('50'));
         });
 
         // it('Should fail if sender doesnt have enough tokens', async () => {
@@ -51,7 +62,7 @@ describe('Token contract', ()=> {
 
         //     await expect(
         //         token.connect(addr1)
-        //         .transfer(owner.address, 1)
+        //         .transfer(owner.address, ethers.utils.parseEther('1'))
         //     )
         //     .to
         //     .be
@@ -67,19 +78,27 @@ describe('Token contract', ()=> {
 
         it('Should update balance after transfers', async () => {
             const initialOwnerBalance = await token.balanceOf(owner.address);
+            console.log(initialOwnerBalance);
 
-            await token.transfer(addr1.address, 100);
-            await token.transfer(addr2.address, 50);
+            await token.transfer(addr1.address, ethers.utils.parseEther('100'));
+            await token.transfer(addr2.address, ethers.utils.parseEther('50'));
 
             const finalOwnerBalance = await token.balanceOf(owner.address);
-            expect(finalOwnerBalance).to.equal(initialOwnerBalance - 150);
+            //use sub to avoid overflow
+            expect(finalOwnerBalance).to.equal(initialOwnerBalance.sub(ethers.utils.parseEther('150')));
 
             const addr1Balance = await token.balanceOf(addr1.address);
-            expect(addr1Balance).to.equal(100);
+            expect(addr1Balance).to.equal(ethers.utils.parseEther('100'));
 
             const addr2Balance = await token.balanceOf(addr2.address);
-            expect(addr2Balance).to.equal(50);
+            expect(addr2Balance).to.equal(ethers.utils.parseEther('50'));
         });
+
+        it('Should emit transfer event', async ()=> {
+            await expect(token.transfer(addr1.address, ethers.utils.parseEther('100')))
+                .to.emit(token, 'Transfer')
+                .withArgs(owner.address, addr1.address, ethers.utils.parseEther('100'));
+        })
     });
 
     
