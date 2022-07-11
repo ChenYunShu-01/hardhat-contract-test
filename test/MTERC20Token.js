@@ -1,7 +1,7 @@
 const {expect, util} = require('chai');
 const { ethers } = require('hardhat');
 
-describe('Token contract', ()=> {
+describe('MTERC20Token contract', ()=> {
 
     let Token, token, owner, addr1, addr2;
 
@@ -56,25 +56,25 @@ describe('Token contract', ()=> {
             expect(addr2Balance).to.equal(ethers.utils.parseEther('50'));
         });
 
-        // it('Should fail if sender doesnt have enough tokens', async () => {
-        //     const initialOwnerBalance = await token.balanceOf(owner.address);
-        //     console.log(initialOwnerBalance);
+        it('Should fail if sender doesnt have enough tokens', async () => {
+            const initialOwnerBalance = await token.balanceOf(owner.address);
+            console.log(initialOwnerBalance);
 
-        //     await expect(
-        //         token.connect(addr1)
-        //         .transfer(owner.address, ethers.utils.parseEther('1'))
-        //     )
-        //     .to
-        //     .be
-        //     .revertedWith('Not enough tokens');
+            await expect(
+                token.connect(addr1)
+                .transfer(owner.address, ethers.utils.parseEther('1'))
+            )
+            .to
+            .be
+            .revertedWith('ERC20: transfer amount exceeds balance');
 
-        //     expect(
-        //         await token.balanceOf(owner.address)
-        //     )
-        //     .to
-        //     .equal(initialOwnerBalance);
+            expect(
+                await token.balanceOf(owner.address)
+            )
+            .to
+            .equal(initialOwnerBalance);
     
-        // });
+        });
 
         it('Should update balance after transfers', async () => {
             const initialOwnerBalance = await token.balanceOf(owner.address);
@@ -97,6 +97,12 @@ describe('Token contract', ()=> {
         it('Should emit transfer event', async ()=> {
             await expect(token.transfer(addr1.address, ethers.utils.parseEther('100')))
                 .to.emit(token, 'Transfer')
+                .withArgs(owner.address, addr1.address, ethers.utils.parseEther('100'));
+        })
+
+        it('Should emit Approval event', async ()=> {
+            await expect(token.approve(addr1.address, ethers.utils.parseEther('100')))
+                .to.emit(token, 'Approval')
                 .withArgs(owner.address, addr1.address, ethers.utils.parseEther('100'));
         })
     });
