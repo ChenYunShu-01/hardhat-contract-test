@@ -1,4 +1,4 @@
-# Project Title
+# Harthad Contract Test
 
 Test ERC20 & ERC721 contract using hardhat.
 
